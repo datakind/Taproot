@@ -68,5 +68,39 @@ if __name__ == '__main__':
 	projects_df.ix[projects_df['How satisfied with the overall experience? '] < 6, 'outcome'] = 0
 	projects_df.ix[projects_df['How satisfied with the overall experience? '] == 6, 'outcome'] = 1
 
+	# for each ord_name, choose the first entry. This way, we don't bias the model.
+	
+	# find the earliest timestamp for each org_id
+	org_ids = {}
+	for row in np.array(projects_df):
+		org_id = row[1]
+		date_app_completed = row[4]
+		if org_id not in org_ids:
+			org_ids[org_id] = pd.to_datetime(date_app_completed)
+		elif org_ids[org_id] > pd.to_datetime(date_app_completed):
+			org_ids[org_id] = pd.to_datetime(date_app_completed)
+	
+	# if timestamp matches, and org_id not in array
+	tmp_ids = {}
+	tmp_array = []
+	for row in np.array(projects_df):
+		org_id = row[1]
+		date_app_completed = row[4]
+		if org_id not in tmp_ids and pd.to_datetime(date_app_completed) == org_ids[org_id]:
+			tmp_ids[org_id] = None
+			tmp_array.append(row)
+	projects_df = pd.DataFrame(np.array(tmp_array), columns=projects_df.columns)
+
+	projects_df.to_csv(os.path.join(PROJECT_ROOT, localPath, 'projects.csv'), index=False)
+
+	##################
+	# TODO:
+	# 1) If an organization repeats, what is their satisfaction level?
+
+	##################
+
+	# start building features
+
+
 	endTime = time.time()
 	print "%.1f seconds to parse data" % (endTime - startTime)
